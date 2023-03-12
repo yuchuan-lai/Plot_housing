@@ -49,15 +49,17 @@ plot_ts <- function(select.region) {
   city.fcast.df$price <- city.fcast.df$price * city.df$price[c(nrow(city.df))]
   # city.fcast.df <- rbind(city.df[c(nrow(city.df)), ], city.fcast.df)
   
-  arima.fcast.st.date <- as.Date(paste0("2023-02", "-01"))
-  fit.df <- filter(city.df, Date < arima.fcast.st.date)
-  arima.fit <- forecast::auto.arima(fit.df$price, allowdrift = TRUE)
-  arima.fcast <- forecast::forecast(arima.fit, h = 12, level = c(80, 95), biasadj = TRUE)
-  arima.fcast.df <- data.frame(arima.fcast)
-  arima.fcast.df$Date <- (seq(from = fit.df$Date[nrow(fit.df)] + 1, length.out = 13, by = "month") - 1)[-c(1)]
+  # arima.fcast.st.date <- as.Date(paste0("2023-02", "-01"))
+  # fit.df <- filter(city.df, Date < arima.fcast.st.date)
+  # arima.fit <- forecast::auto.arima(fit.df$price, allowdrift = TRUE)
+  # arima.fcast <- forecast::forecast(arima.fit, h = 12, level = c(80, 95), biasadj = TRUE)
+  # arima.fcast.df <- data.frame(arima.fcast)
+  # arima.fcast.df$Date <- (seq(from = fit.df$Date[nrow(fit.df)] + 1, length.out = 13, by = "month") - 1)[-c(1)]
+  # max.y.axis <- max(city.df$price, arima.fcast.df$Hi.95, city.fcast.df$price, na.rm = TRUE)
+  # min.y.axis <- min(city.df$price, arima.fcast.df$Lo.95, city.fcast.df$price, na.rm = TRUE)
   
-  max.y.axis <- max(city.df$price, arima.fcast.df$Hi.95, city.fcast.df$price, na.rm = TRUE)
-  min.y.axis <- min(city.df$price, arima.fcast.df$Lo.95, city.fcast.df$price, na.rm = TRUE)
+  max.y.axis <- max(city.df$price, city.fcast.df$price, na.rm = TRUE)
+  min.y.axis <- min(city.df$price, city.fcast.df$price, na.rm = TRUE)
   
   y.bound <- seq(min.y.axis, max.y.axis, length.out = 100)
   y.breaks <- as.numeric(gsub("\\(|\\[", "", gsub(",.*", "", levels(cut(y.bound, breaks = pretty(y.bound, n = 10), include.lowest = TRUE)))))
@@ -65,9 +67,9 @@ plot_ts <- function(select.region) {
   
   city.df$var <- rep("hist", nrow(city.df))
   city.fcast.df$var <- rep("fcast", nrow(city.fcast.df))
-  arima.fcast.mean.df <- select(arima.fcast.df, c(Date, Point.Forecast))
-  colnames(arima.fcast.mean.df)[2] <- "price"
-  arima.fcast.mean.df$var <- rep("arima", nrow(city.fcast.df))
+  # arima.fcast.mean.df <- select(arima.fcast.df, c(Date, Point.Forecast))
+  # colnames(arima.fcast.mean.df)[2] <- "price"
+  # arima.fcast.mean.df$var <- rep("arima", nrow(city.fcast.df))
   
   comb.df <- rbind(city.df, city.fcast.df) 
   comb.df$var <- factor(comb.df$var, levels = c('hist', 'fcast'))
@@ -97,6 +99,9 @@ plot_ts <- function(select.region) {
   y.breaks.alter <- c(y.breaks.alter, round(mean.perc.change, digits = 2))
   
   theme_set(theme_bw())
+  
+  comb.df <- filter(comb.df, is.na(price) == FALSE)
+  city.full.df <- filter(city.full.df, is.na(perc.trans) == FALSE)
   
   ts.p <- ggplot() + 
     geom_hline(yintercept = (0 - min.perc.axis ) / trans.value + min.y.axis, color = "#FF330060", linetype = "longdash") +
