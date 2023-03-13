@@ -109,15 +109,15 @@ plot_ts <- function(select.region) {
     geom_line(data = comb.df, aes(x = Date, y = price, color = var), size = 1) +
     geom_line(data = city.full.df, aes(x = Date, y = perc.trans , color = var), linetype = "longdash") +
     scale_color_manual(values = c("#333333", "#0000FF"), 
-                       labels = c("Historical data", "Zillow forecast"),
+                       labels = c("Historical", "Forecasted"),
                        name = "") +
     scale_x_date(date_breaks = "2 year", labels = date_format("%m/%Y")) +
     scale_y_continuous(breaks = y.breaks,  sec.axis = sec_axis(~ (. - min.y.axis ) * trans.value + min.perc.axis, breaks = y.breaks.alter, 
-                                                               name = "12 month moving average m-to-m percent change (%)")) +
-    xlab("Date") + ylab(paste0("Zillow median price (thousand dollars)")) +
+                                                               name = "Filtered rate of change (%)\ndashed lines")) +
+    xlab("Date") + ylab(paste0("Price index (thousand dollars)\nsolid lines")) +
     theme(legend.position = "bottom", plot.title = element_text(size = 18), 
           axis.title.x = element_text(size = 15), axis.title.y = element_text(size = 15), legend.text = element_text(size = 15),
-          axis.text.y = element_text(size = 14), axis.text.x = element_text(size = 12)) +
+          axis.text.y = element_text(size = 14), axis.text.x = element_text(size = 10)) +
     ggtitle(paste0("Metropolitan area: ", select.region))
   
   
@@ -137,8 +137,8 @@ plot_all.ts <- function(select.var) {
     
     plot_ly(city.comb.sum.sql, color = I("#FF6600"), alpha = 0.5) %>% group_by(city) -> ts.p
     ts.p %>% group_by(city) %>% add_lines(x = ~ Date, y = ~ perc) -> obs.ts
-    obs.ts %>% layout(title = "Zillow median list price (seasonaly adjusted) of top 100 metro area", xaxis = list(title = "Date", dtick = 12), 
-                      yaxis = list(title =  "Median price compared to 2000 (%)")) -> obs.ts
+    obs.ts %>% layout(title = "Zillow price index of top 100 metro area", xaxis = list(title = "Date", dtick = 12), 
+                      yaxis = list(title =  "Price index compared to 2000 (%)")) -> obs.ts
     
     highlight(
       obs.ts, 
@@ -183,12 +183,12 @@ all.states <- gsub(".*[, ]", "", region.names)
 all.states.names <- state.name[match(all.states, state.abb)]
 all.states.names[is.na(all.states.names)] <- "Washington DC"
 region.names.df <- data.frame("abb" = all.states, "name" = all.states.names, "region" = region.names)
-unique.states.names <- unique(sort(state.name[match(all.states, state.abb)]))
+unique.states.names <- sort(c(unique(sort(state.name[match(all.states, state.abb)])), "Washington DC"))
 
-ts.list <- c("Price change relative to 2000", "Price change rate")
+ts.list <- c("Price change relative to 2000", "Rate of price change")
 
 ui <- fluidPage(
-  titlePanel("Median home price tracking at US metro (Zillow)"),
+  titlePanel("Zillow home price index (all homes, seasonally adjusted)"),
   sidebarLayout(
     sidebarPanel(
       selectInput("var", "For the top 100 metro", choices = ts.list, selected = ts.list[1]),
@@ -199,8 +199,8 @@ ui <- fluidPage(
     ),
     mainPanel(
       shinycssloaders::withSpinner(
-        fluidRow(plotlyOutput("all.region.p", height = "500px", width = "800px"), 
-                 plotOutput("select.region.p", height = "500px", width = "800px")
+        fluidRow(plotlyOutput("all.region.p"), 
+                 plotOutput("select.region.p")
         ),
         hide.ui = FALSE, type = 3, color = "#666666", color.background = "#FFFFFF")
     )
