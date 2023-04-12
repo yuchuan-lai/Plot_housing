@@ -17,6 +17,7 @@ city.info.df <- read.csv("https://yuchuanlai.com/Data/Region.info.csv")[-c(1)]
 na.idx <- c(1:nrow(hist.data))[apply(hist.data, 1, function(data) is.na(data[6]))]
 hist.data.filtered <- hist.data[-c(1, na.idx), ]
 region.names <- hist.data.filtered$RegionName
+hist.end.date <- as.Date(gsub("X", "", colnames(hist.data)[ncol(hist.data)]), format = "%Y.%m.%d")
 
 cal_hist.df <- function(city.data) {
   city.data.ts <- t(city.data[-c(1:5)])
@@ -158,7 +159,7 @@ plot_all.ts <- function(select.var) {
     city.comb.sum$Lat <- apply(city.comb.sum, 1, function(data) city.info.conus$Lat[city.info.conus$idx == as.numeric(data[6])])
     city.comb.sum$Lon <- apply(city.comb.sum, 1, function(data) city.info.conus$Lon[city.info.conus$idx == as.numeric(data[6])])
     city.comb.sum$city <- apply(city.comb.sum, 1, function(data) city.info.conus$Region[city.info.conus$idx == as.numeric(data[6])])
-    city.comb.sum <- filter(city.comb.sum, Date < as.Date("2023-03-01"))
+    city.comb.sum <- filter(city.comb.sum, Date <= hist.end.date)
     city.comb.sum.sql <- highlight_key(city.comb.sum, ~ city)
     
     plot_ly(city.comb.sum.sql, color = I("#FF6600"), alpha = 0.2) %>% group_by(city) -> ts.p
